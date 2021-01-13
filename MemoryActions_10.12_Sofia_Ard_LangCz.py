@@ -1386,10 +1386,16 @@ for thisTrial in trials:
         answer_button.oldButtonState = answer_button.device.getAllButtons()[:]
         answer_button.keys = []
         answer_button.rt = []
-        if feedback_q == 1:       # Sofiia 13.11.2020 time to answer the question (in training 10 sec, in main exp 2 sec)
+        if feedback_q == 1:       # Sofiia 13.11.2020 time to read the question (in training 10 sec, in main exp 2 sec)
             q_time = 10.000000
         else:
             q_time = 2.000000
+        
+        if delayed == 1:
+            time2answ = q_time + ITI_del  # Sofiia 13.01.2021 time to answer the question - possibility to answer after it's dissappeared - also during ITI
+        else:
+            time2answ = q_time + ITI_immed
+            
         routineTimer.add(q_time)
         # keep track of which components have finished
         question_delComponents = [question, answer_button]
@@ -1443,7 +1449,7 @@ for thisTrial in trials:
                 win.callOnFlip(answer_button.clock.reset)  # t=0 on next screen flip
             if answer_button.status == STARTED:
                 # is it time to stop? (based on global clock, using actual start)
-                if tThisFlipGlobal > answer_button.tStartRefresh + q_time-frameTolerance:  # Sofiia 13.11.2020
+                if tThisFlipGlobal > answer_button.tStartRefresh + time2answ-frameTolerance:  # Sofiia 13.01.2021
                     # keep track of stop time/frame for later
                     answer_button.tStop = t  # not accounting for scr refresh
                     answer_button.frameNStop = frameN  # exact frame index
