@@ -1,4 +1,4 @@
-# last version from 10.12.2020 
+# last version from 13.01.2020 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -691,6 +691,10 @@ for thisTrial in trials:
         #------>
         ITI_immed = randint(8, 12)/10  # Sofiia 09.11.2020 variable ITI (0.8-1.2) for immed trials
         
+        # Sofiia 13.01.2021 define distance between square and triangle (needed further for defining correctness of response)
+        SqTr_distance = sqrt((x_square-x_triangle)**2+(y_square-y_triangle)**2)       
+        #print('dist ', SqTr_distance) 
+        
         image_im.setImage('Images/'+picture)
         joystick_ImmedResp.oldButtonState = joystick_ImmedResp.device.getAllButtons()[:]
         joystick_ImmedResp.activeButtons=[i for i in range(joystick_ImmedResp.numButtons)]
@@ -802,7 +806,7 @@ for thisTrial in trials:
                     
                 # compare the position of joystick with x,y coordinates of correct object each frame
                 #if joystick_resp_corr<0 and (correct_object== 'square' and (float(x_square)-0.12)<x-x1<(float(x_square)+0.12) and (float(y_square)-0.12)<y-y1<(float(y_square)+0.12)) or (correct_object== 'triangle' and (float(x_triangle)-0.12)<x-x1<(float(x_triangle)+0.12) and (float(y_triangle)-0.12)<y-y1<(float(y_triangle)+0.12)):
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
+                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
                 # -------->
@@ -957,6 +961,9 @@ for thisTrial in trials:
         #------>
         ITI_del = randint(18, 22)/10  # Sofiia 09.11.2020 variable ITI (1.8-2.2) for del trials
         delay = randint(39, 42)/10  # Sofiia 09.11.2020 variable delay (3.9-4.2) for del trials
+        
+        # Sofiia 13.01.2021 define distance between square and triangle (needed further for defining correctness of response)
+        SqTr_distance = sqrt((x_square-x_triangle)**2+(y_square-y_triangle)**2)
         
         image_del.setImage('Images/'+picture)
         #background.setImage('background.png')
@@ -1143,7 +1150,7 @@ for thisTrial in trials:
                     logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->                    
                 # compare the position of joystick with x,y coordinates of correct object each frame
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
+                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_DelResp.joystickClock.getTime()
                 # -------->
