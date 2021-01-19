@@ -1,4 +1,4 @@
-# last version from 13.01.2020 
+# last version from 19.01.2020 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -132,6 +132,7 @@ sumScore = 0
 missed = 0
 sumRt = 0
 answScore = 0   # Sofiia 06.11.2020 initialize variable for counting correct answers on the question about objects
+omitBlock = [0]*2   # Sofiia 19.01.2021 list of 2 elements: number of block, true/false (omit or not)
 
 textInstr = ''
 text_instr1 = visual.TextStim(win=win, name='text_instr1',
@@ -513,12 +514,14 @@ for thisTrial in trials:
     
     for thisLoopPause in loopPause:
         currentLoop = loopPause
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoopPause.rgb)
         if thisLoopPause != None:
             for paramName in thisLoopPause:
                 exec('{} = thisLoopPause[paramName]'.format(paramName))
         
-        # ------Prepare to start Routine "instruction"-------
+        # ------Prepare to start Routine "instruction"-------    
         continueRoutine = True
         # update component parameters for each repeat      % Sofiia 13.11.2020, change instruction, according to each condition
         if immed==1 and delayed_d==0:
@@ -665,15 +668,17 @@ for thisTrial in trials:
         for paramName in thisLoop_im:
             exec('{} = thisLoop_im[paramName]'.format(paramName))
     
-    for thisLoop_im in loop_im:
-        currentLoop = loop_im
+    for thisLoop_im in loop_im:   
+        currentLoop = loop_im                 
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_im.rgb)
         if thisLoop_im != None:
             for paramName in thisLoop_im:
                 exec('{} = thisLoop_im[paramName]'.format(paramName))
         
-        # ------Prepare to start Routine "trial_im"-------
-        continueRoutine = True
+        # ------Prepare to start Routine "trial_im"-------       
+        continueRoutine = True        
         routineTimer.add(4.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
@@ -938,13 +943,15 @@ for thisTrial in trials:
     
     for thisLoop_del in loop_del:
         currentLoop = loop_del
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_del.rgb)
         if thisLoop_del != None:
             for paramName in thisLoop_del:
                 exec('{} = thisLoop_del[paramName]'.format(paramName))
         
         # ------Prepare to start Routine "trial_del"-------
-        continueRoutine = True
+        continueRoutine = True        
         routineTimer.add(14.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
@@ -1281,6 +1288,8 @@ for thisTrial in trials:
     
     for thisLoopFeedback in loopFeedback:
         currentLoop = loopFeedback
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoopFeedback.rgb)
         if thisLoopFeedback != None:
             for paramName in thisLoopFeedback:
@@ -1378,6 +1387,8 @@ for thisTrial in trials:
     
     for thisLoop_del_diff in loop_del_diff:
         currentLoop = loop_del_diff
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_del_diff.rgb)
         if thisLoop_del_diff != None:
             for paramName in thisLoop_del_diff:
@@ -1544,6 +1555,8 @@ for thisTrial in trials:
     
     for thisLoop_fb_question in loop_fb_question:
         currentLoop = loop_fb_question
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break    
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_fb_question.rgb)
         if thisLoop_fb_question != None:
             for paramName in thisLoop_fb_question:
@@ -1639,6 +1652,8 @@ for thisTrial in trials:
     
     for thisLoopEnd_block in loopEnd_block:
         currentLoop = loopEnd_block
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break         
         # abbreviate parameter names if possible (e.g. rgb = thisLoopEnd_block.rgb)
         if thisLoopEnd_block != None:
             for paramName in thisLoopEnd_block:
@@ -1755,6 +1770,12 @@ for thisTrial in trials:
         for thisComponent in end_blockComponents:
             if hasattr(thisComponent, "setAutoDraw"):
                 thisComponent.setAutoDraw(False)
+        
+        # Sofiia 19.01.2020 attempt to programm the number of failed blocks in training session
+        if feedback==1 and sumScore >= 4: # if the number of correct is 4 or more from 5 , do not repeat this block
+            omitBlock[0] = block # which block
+            omitBlock[1] = 1    # omit
+                
         attempts = 0
         sumScore = 0
         missed = 0
