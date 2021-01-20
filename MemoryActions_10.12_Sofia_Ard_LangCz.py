@@ -1404,13 +1404,13 @@ for thisTrial in trials:
         answer_button.oldButtonState = answer_button.device.getAllButtons()[:]
         answer_button.keys = []
         answer_button.rt = []
-        if feedback_q == 1:       # Sofiia 13.11.2020 time to read the question (in training 10 sec, in main exp 2 sec)
+        if feedback_q == 1 and block == -3:   # Sofiia: time to read the question (in training immed_diff - 10 sec (first time), in training del_diff and in main exp - 2 sec)
             q_time = 10.000000
         else:
             q_time = 2.000000
         
         if delayed == 1:
-            time2answ = q_time + ITI_del  # Sofiia 13.01.2021 time to answer the question - possibility to answer after it's dissappeared - also during ITI
+            time2answ = q_time + ITI_del  # Sofiia: time to answer the question - possibility to answer after it's dissappeared - also during ITI
         else:
             time2answ = q_time + ITI_immed
             
