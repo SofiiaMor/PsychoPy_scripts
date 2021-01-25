@@ -1,4 +1,4 @@
-# last version from 19.01.2020 
+# last version from 25.01.2020 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -31,6 +31,8 @@ from psychopy.hardware import keyboard
 
 import serial
 from Arduino import * #lukas
+
+from intersect import intersection  # Sofiia
 
 # Sofiia ---------------------<
 
@@ -670,7 +672,7 @@ for thisTrial in trials:
     
     for thisLoop_im in loop_im:   
         currentLoop = loop_im                 
-        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repetition of failed blocks
             break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_im.rgb)
         if thisLoop_im != None:
@@ -682,7 +684,6 @@ for thisTrial in trials:
         routineTimer.add(4.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
-        #x1, y1 = joystick_ImmedResp.getX(), -1*joystick_ImmedResp.getY() #delta between the middle of the screen and the position of joystick before the trial
         
         joystick_resp_corr = -1
         joystick_RT_corr = 0.0
@@ -809,8 +810,7 @@ for thisTrial in trials:
                     logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->
                     
-                # compare the position of joystick with x,y coordinates of correct object each frame
-                #if joystick_resp_corr<0 and (correct_object== 'square' and (float(x_square)-0.12)<x-x1<(float(x_square)+0.12) and (float(y_square)-0.12)<y-y1<(float(y_square)+0.12)) or (correct_object== 'triangle' and (float(x_triangle)-0.12)<x-x1<(float(x_triangle)+0.12) and (float(y_triangle)-0.12)<y-y1<(float(y_triangle)+0.12)):
+                # compare the position of joystick with x,y coordinates of correct object each frame               
                 if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
@@ -881,12 +881,39 @@ for thisTrial in trials:
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
             arduino.send_pulse_down()
             logging.log(level=logging.DATA, msg='Arduino pulse down')
-            # --------------------->            
-        #else:
-            #i = 0
-            #while joystick_ImmedResp.x[i] == joystick_ImmedResp.x[i+1] and joystick_ImmedResp.y[i] == joystick_ImmedResp.y[i+1]:
-            #    i +=1
-            #nFrame_RT = i+1
+            # --------------------->                 
+     
+        # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
+        if joystick_resp_corr < 0:
+            # define correct zone for response around correct object 
+            if correct_object == 'square':
+                corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+            else:
+                corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+        
+            # new lists of zeros for new centered coordinates
+            x_centered = [0]*len(joystick_ImmedResp.x) 
+            y_centered = [0]*len(joystick_ImmedResp.y)
+            # convert real x y coordinates in zero-centered
+            for i in range(len(joystick_ImmedResp.x)):
+                x_centered[i] = joystick_ImmedResp.x[i] - x1
+        
+            for i in range(len(joystick_ImmedResp.y)):
+                y_centered[i] = joystick_ImmedResp.y[i] - y1
+        #print('x_cent',x_centered,'y_cent', y_centered)
+        
+        # displace correct zone by x1 and y1 (displacement of joystick from zero)
+        #for i in range(len(corr_zoneY)):
+        #    corr_zoneY[i] = corr_zoneY[i]+y1
+        #corr_zoneX = corr_zoneX + x1
+        
+            x_inter, y_inter = intersection(x_centered, y_centered, corr_zoneX, corr_zoneY) # find points of intersection between joystick trajectory and correct zone   
+            #print('x_inter',x_inter,'y_inter', y_inter)
+            if len(x_inter) != 0 or len(y_inter) != 0:
+                joystick_resp_corr = 1
+        # ---------------->
         
         joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase # Sofiia 10.12.2020 change time
         
@@ -896,8 +923,7 @@ for thisTrial in trials:
              sumRt += joystick_RT_corr;
         elif missed_j == 1:
             missed += 1
-        # ----------->
-            
+        # -----------> 
         
         loop_im.addData('text_cross_im.started', text_cross_im.tStartRefresh)
         loop_im.addData('text_cross_im.stopped', text_cross_im.tStopRefresh)
@@ -955,7 +981,6 @@ for thisTrial in trials:
         routineTimer.add(14.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
-        #x1, y1 = joystick_DelResp.getX(), -1*joystick_DelResp.getY() #delta between the middle of the screen and the position of joystick before the trial
         joystick_resp_corr = -1
         joystick_RT_corr = 0.0
         
@@ -1226,7 +1251,35 @@ for thisTrial in trials:
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
             arduino.send_pulse_down()
             logging.log(level=logging.DATA, msg='Arduino pulse down')
-            # --------------------->              
+            # --------------------->   
+ 
+        # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
+        if joystick_resp_corr < 0:
+            # define correct zone for response around correct object 
+            if correct_object == 'square':
+                corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+            else:
+                corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+        
+            # new lists of zeros for new centered coordinates
+            x_centered = [0]*len(joystick_DelResp.x) 
+            y_centered = [0]*len(joystick_DelResp.y)
+            # convert real x y coordinates in zero-centered
+            for i in range(len(joystick_DelResp.x)):
+                x_centered[i] = joystick_DelResp.x[i] - x1
+        
+            for i in range(len(joystick_DelResp.y)):
+                y_centered[i] = joystick_DelResp.y[i] - y1
+            #print('x_cent',x_centered,'y_cent', y_centered)
+        
+            x_inter, y_inter = intersection(x_centered, y_centered, corr_zoneX, corr_zoneY) # find points of intersection between joystick trajectory and correct zone   
+            #print('x_inter',x_inter,'y_inter', y_inter)
+            if len(x_inter) != 0 or len(y_inter) != 0:
+                joystick_resp_corr = 1
+        # ---------------->        
+  
         joystick_RT_corr = joystick_RT_corr-(background.tStartRefresh-cross_ITI.tStartRefresh) # calculate RT relative to the start of action phase  # Sofiia 10.12.2020 change calculation of RT start    
         
         attempts += 1
