@@ -1,4 +1,4 @@
-# last version from 25.01.2020 
+# last version from 01.02.2021
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -811,7 +811,8 @@ for thisTrial in trials:
                     # --------------------->
                     
                 # compare the position of joystick with x,y coordinates of correct object each frame               
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)): # Sofia - return old threshold
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
                 # -------->
@@ -882,7 +883,7 @@ for thisTrial in trials:
             arduino.send_pulse_down()
             logging.log(level=logging.DATA, msg='Arduino pulse down')
             # --------------------->                 
-     
+        
         # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
         if joystick_resp_corr < 0:
             # define correct zone for response around correct object 
@@ -913,9 +914,19 @@ for thisTrial in trials:
             #print('x_inter',x_inter,'y_inter', y_inter)
             if len(x_inter) != 0 or len(y_inter) != 0:
                 joystick_resp_corr = 1
+                
+                # find correct RT
+                if x_inter[0] in x_centered
+                    timeInd = x_centered.index(x_inter)
+                    print('timeInd', timeInd)
+                    joystick_RT_corr = joystick_ImmedResp.time[timeInd]
+                    print('joystick_RT_corr', joystick_RT_corr)
+                    joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
+        else:
+            joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
         # ---------------->
         
-        joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase # Sofiia 10.12.2020 change time
+        #joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase # Sofiia 10.12.2020 change time
         
         attempts += 1
         if joystick_resp_corr==1:
@@ -1182,7 +1193,8 @@ for thisTrial in trials:
                     logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->                    
                 # compare the position of joystick with x,y coordinates of correct object each frame
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_DelResp.joystickClock.getTime()
                 # -------->
@@ -1278,9 +1290,19 @@ for thisTrial in trials:
             #print('x_inter',x_inter,'y_inter', y_inter)
             if len(x_inter) != 0 or len(y_inter) != 0:
                 joystick_resp_corr = 1
+                
+                # find correct RT
+                if x_inter[0] in x_centered
+                    timeInd = x_centered.index(x_inter[0])
+                    print('timeInd', timeInd)
+                    joystick_RT_corr = joystick_DelResp.time[timeInd]
+                    print('joystick_RT_corr', joystick_RT_corr)
+                    joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
+        else:
+            joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
         # ---------------->        
   
-        joystick_RT_corr = joystick_RT_corr-(background.tStartRefresh-cross_ITI.tStartRefresh) # calculate RT relative to the start of action phase  # Sofiia 10.12.2020 change calculation of RT start    
+        #joystick_RT_corr = joystick_RT_corr-(background.tStartRefresh-cross_ITI.tStartRefresh) # calculate RT relative to the start of action phase  # Sofiia 10.12.2020 change calculation of RT start    
         
         attempts += 1
         if joystick_resp_corr==1:
@@ -1462,10 +1484,10 @@ for thisTrial in trials:
         else:
             q_time = 2.000000
         
-        if delayed == 1:
-            time2answ = q_time + ITI_del  # Sofiia: time to answer the question - possibility to answer after it's dissappeared - also during ITI
-        else:
-            time2answ = q_time + ITI_immed
+        #if delayed == 1:
+        #    time2answ = q_time + ITI_del  # Sofiia: time to answer the question - possibility to answer after it's dissappeared - also during ITI
+        #else:
+        #    time2answ = q_time + ITI_immed
             
         routineTimer.add(q_time)
         # keep track of which components have finished
@@ -1520,7 +1542,8 @@ for thisTrial in trials:
                 win.callOnFlip(answer_button.clock.reset)  # t=0 on next screen flip
             if answer_button.status == STARTED:
                 # is it time to stop? (based on global clock, using actual start)
-                if tThisFlipGlobal > answer_button.tStartRefresh + time2answ-frameTolerance:  # Sofiia 13.01.2021
+                if tThisFlipGlobal > answer_button.tStartRefresh + q_time-frameTolerance:  # Sofiia 13.11.2020
+                #if tThisFlipGlobal > answer_button.tStartRefresh + time2answ-frameTolerance:  # Sofiia 13.01.2021
                     # keep track of stop time/frame for later
                     answer_button.tStop = t  # not accounting for scr refresh
                     answer_button.frameNStop = frameN  # exact frame index
