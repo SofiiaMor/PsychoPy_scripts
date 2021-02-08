@@ -22,7 +22,7 @@ from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,
 
 import numpy as np  # whole numpy lib is available, prepend 'np.'
 from numpy import (sin, cos, tan, log, log10, pi, average,
-                   sqrt, std, deg2rad, rad2deg, linspace, asarray)
+                   sqrt, std, deg2rad, rad2deg, linspace, asarray, array, amin, absolute)
 from numpy.random import random, randint, normal, shuffle
 import os  # handy system and path functions
 import sys  # to get file system encoding
@@ -888,11 +888,15 @@ for thisTrial in trials:
         if joystick_resp_corr < 0:
             # define correct zone for response around correct object 
             if correct_object == 'square':
-                corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
-                corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                #corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                corr_zoneX = [x_square-0.105, x_square-0.105, x_square+0.105, x_square+0.105]
+                corr_zoneY = [y_square-0.105, y_square+0.105, y_square+0.105, y_square-0.105]
             else:
-                corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
-                corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                #corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                #corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                corr_zoneX = [x_triangle-0.105, x_triangle-0.105, x_triangle+0.105, x_triangle+0.105]
+                corr_zoneY = [y_triangle-0.105, y_triangle+0.105, y_triangle+0.105, y_triangle-0.105]
         
             # new lists of zeros for new centered coordinates
             x_centered = [0]*len(joystick_ImmedResp.x) 
@@ -905,23 +909,22 @@ for thisTrial in trials:
                 y_centered[i] = joystick_ImmedResp.y[i] - y1
         #print('x_cent',x_centered,'y_cent', y_centered)
         
-        # displace correct zone by x1 and y1 (displacement of joystick from zero)
-        #for i in range(len(corr_zoneY)):
-        #    corr_zoneY[i] = corr_zoneY[i]+y1
-        #corr_zoneX = corr_zoneX + x1
-        
             x_inter, y_inter = intersection(x_centered, y_centered, corr_zoneX, corr_zoneY) # find points of intersection between joystick trajectory and correct zone   
             #print('x_inter',x_inter,'y_inter', y_inter)
             if len(x_inter) != 0 or len(y_inter) != 0:
                 joystick_resp_corr = 1
                 
-                # find correct RT
-                if x_inter[0] in x_centered
-                    timeInd = x_centered.index(x_inter)
-                    print('timeInd', timeInd)
-                    joystick_RT_corr = joystick_ImmedResp.time[timeInd]
-                    print('joystick_RT_corr', joystick_RT_corr)
-                    joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
+                # find correct RT (using alternative method for dsearchn in matlab:  [val, idx] = min(abs(vector - thisValue)))
+                
+                x_interAr = array(x_inter)   # create array instead of list
+                x_centeredAr = array(x_centered)
+                
+                abDif = absolute(x_centeredAr - x_interAr[0])   # find abs diff between x cooordinates and the first point of intersec
+                result = np.where(abDif == amin(abDif))  # get the indice of minimum element 
+                timeInd = result[0][0]   # index of closest point in x to intersection point - to get the time of this point
+                joystick_RT_corr = joystick_ImmedResp.time[timeInd]
+                #print('joystick_RT_corr', joystick_RT_corr)
+                joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
         else:
             joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
         # ---------------->
@@ -1269,11 +1272,15 @@ for thisTrial in trials:
         if joystick_resp_corr < 0:
             # define correct zone for response around correct object 
             if correct_object == 'square':
-                corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
-                corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                #corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                corr_zoneX = [x_square-0.105, x_square-0.105, x_square+0.105, x_square+0.105]
+                corr_zoneY = [y_square-0.105, y_square+0.105, y_square+0.105, y_square-0.105]
             else:
-                corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
-                corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                #corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                #corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                corr_zoneX = [x_triangle-0.105, x_triangle-0.105, x_triangle+0.105, x_triangle+0.105]
+                corr_zoneY = [y_triangle-0.105, y_triangle+0.105, y_triangle+0.105, y_triangle-0.105]
         
             # new lists of zeros for new centered coordinates
             x_centered = [0]*len(joystick_DelResp.x) 
@@ -1292,12 +1299,15 @@ for thisTrial in trials:
                 joystick_resp_corr = 1
                 
                 # find correct RT
-                if x_inter[0] in x_centered
-                    timeInd = x_centered.index(x_inter[0])
-                    print('timeInd', timeInd)
-                    joystick_RT_corr = joystick_DelResp.time[timeInd]
-                    print('joystick_RT_corr', joystick_RT_corr)
-                    joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
+                x_interAr = array(x_inter)   # create array instead of lists
+                x_centeredAr = array(x_centered)
+                
+                abDif = absolute(x_centeredAr - x_interAr[0])   # find abs diff between x cooordinates and the first point of intersec
+                result = np.where(abDif == amin(abDif))  # get the indice of minimum element 
+                timeInd = result[0][0]   # index of closest point in x to intersection point - to get the time of this point - approximate RT
+                joystick_RT_corr = joystick_DelResp.time[timeInd]
+                #print('joystick_RT_corr', joystick_RT_corr)
+                joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
         else:
             joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
         # ---------------->        
