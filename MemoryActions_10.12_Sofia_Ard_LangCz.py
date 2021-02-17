@@ -1,4 +1,4 @@
-# last version from 01.02.2021
+# last version from 17.02.2021
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -805,16 +805,20 @@ for thisTrial in trials:
                 if len(joystick_ImmedResp.x)!=0 and (x!= joystick_ImmedResp.x[-1] or y!= joystick_ImmedResp.y[-1]) and move==0:
                     joystick_RT_start = joystick_ImmedResp.joystickClock.getTime() - (image_im.tStartRefresh-text_cross_im.tStartRefresh )    # Sofiia 10.12.2020 change time
                     move = 1
-                    # Sofiia 19.11--------<
-                    arduino.send_pulse_down()
-                    logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    # Sofiia --------< start of joystick movement
+                    #arduino.send_pulse_down()
+                    #logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->
                     
                 # compare the position of joystick with x,y coordinates of correct object each frame               
                 #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)): # Sofia - return old threshold
+                if joystick_resp_corr<0 and ((correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105))): # Sofia - return old threshold
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
+                    # Sofiia--------<   frame when subject crosses the correct zone by joystick
+                    arduino.send_pulse_down()
+                    logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    # --------------------->
                 # -------->
                 
                 joystick_ImmedResp.x.append(x)
@@ -880,12 +884,17 @@ for thisTrial in trials:
         if NoMove_x and NoMove_y:
             missed_j = 1
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
-            arduino.send_pulse_down()
-            logging.log(level=logging.DATA, msg='Arduino pulse down')
+            #arduino.send_pulse_down()
+            #logging.log(level=logging.DATA, msg='Arduino pulse down')
             # --------------------->                 
         
         # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
         if joystick_resp_corr < 0:
+            # Sofiia--------<  if patient made incorrect movement, still we need to send pulses down
+            arduino.send_pulse_down()
+            logging.log(level=logging.DATA, msg='Arduino pulse down')
+            # --------------------->                 
+            
             # define correct zone for response around correct object 
             if correct_object == 'square':
                 #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
@@ -1192,14 +1201,18 @@ for thisTrial in trials:
                     joystick_RT_start = joystick_DelResp.joystickClock.getTime() - (background.tStartRefresh-cross_ITI.tStartRefresh) # Sofiia 10.12.2020 change calculation of RT start 
                     move = 1 
                     # Sofiia 19.11--------<
-                    arduino.send_pulse_down()
-                    logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    #arduino.send_pulse_down()
+                    #logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->                    
                 # compare the position of joystick with x,y coordinates of correct object each frame
                 #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
+                if joystick_resp_corr<0 and ((correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105))):
                     joystick_resp_corr = 1
                     joystick_RT_corr = joystick_DelResp.joystickClock.getTime()
+                    # Sofiia--------<
+                    arduino.send_pulse_down()
+                    logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    # --------------------->                    
                 # -------->
                 joystick_DelResp.x.append(x)
                 joystick_DelResp.y.append(y)
@@ -1264,12 +1277,17 @@ for thisTrial in trials:
         if NoMove_x and NoMove_y:
             missed_j = 1
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
-            arduino.send_pulse_down()
-            logging.log(level=logging.DATA, msg='Arduino pulse down')
+            #arduino.send_pulse_down()
+            #logging.log(level=logging.DATA, msg='Arduino pulse down')
             # --------------------->   
  
         # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
         if joystick_resp_corr < 0:
+            # Sofiia--------<  
+            arduino.send_pulse_down()
+            logging.log(level=logging.DATA, msg='Arduino pulse down')
+            # --------------------->   
+            
             # define correct zone for response around correct object 
             if correct_object == 'square':
                 #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
