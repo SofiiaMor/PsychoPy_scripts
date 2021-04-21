@@ -1,4 +1,4 @@
-# last version from 10.12.2020 
+# last version from 17.02.2021
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -22,7 +22,7 @@ from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,
 
 import numpy as np  # whole numpy lib is available, prepend 'np.'
 from numpy import (sin, cos, tan, log, log10, pi, average,
-                   sqrt, std, deg2rad, rad2deg, linspace, asarray)
+                   sqrt, std, deg2rad, rad2deg, linspace, asarray, array, amin, absolute)
 from numpy.random import random, randint, normal, shuffle
 import os  # handy system and path functions
 import sys  # to get file system encoding
@@ -31,6 +31,8 @@ from psychopy.hardware import keyboard
 
 import serial
 from Arduino import * #lukas
+
+from intersect import intersection  # Sofiia
 
 # Sofiia ---------------------<
 
@@ -131,6 +133,7 @@ sumScore = 0
 missed = 0
 sumRt = 0
 answScore = 0   # Sofiia 06.11.2020 initialize variable for counting correct answers on the question about objects
+omitBlock = [0]*2   # Sofiia 19.01.2021 list of 2 elements: number of block, true/false (omit or not)
 
 textInstr = ''
 text_instr1 = visual.TextStim(win=win, name='text_instr1',
@@ -512,12 +515,14 @@ for thisTrial in trials:
     
     for thisLoopPause in loopPause:
         currentLoop = loopPause
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoopPause.rgb)
         if thisLoopPause != None:
             for paramName in thisLoopPause:
                 exec('{} = thisLoopPause[paramName]'.format(paramName))
         
-        # ------Prepare to start Routine "instruction"-------
+        # ------Prepare to start Routine "instruction"-------    
         continueRoutine = True
         # update component parameters for each repeat      % Sofiia 13.11.2020, change instruction, according to each condition
         if immed==1 and delayed_d==0:
@@ -664,19 +669,20 @@ for thisTrial in trials:
         for paramName in thisLoop_im:
             exec('{} = thisLoop_im[paramName]'.format(paramName))
     
-    for thisLoop_im in loop_im:
-        currentLoop = loop_im
+    for thisLoop_im in loop_im:   
+        currentLoop = loop_im                 
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repetition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_im.rgb)
         if thisLoop_im != None:
             for paramName in thisLoop_im:
                 exec('{} = thisLoop_im[paramName]'.format(paramName))
         
-        # ------Prepare to start Routine "trial_im"-------
-        continueRoutine = True
+        # ------Prepare to start Routine "trial_im"-------       
+        continueRoutine = True        
         routineTimer.add(4.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
-        #x1, y1 = joystick_ImmedResp.getX(), -1*joystick_ImmedResp.getY() #delta between the middle of the screen and the position of joystick before the trial
         
         joystick_resp_corr = -1
         joystick_RT_corr = 0.0
@@ -689,6 +695,10 @@ for thisTrial in trials:
         missed_j = 0
         #------>
         ITI_immed = randint(8, 12)/10  # Sofiia 09.11.2020 variable ITI (0.8-1.2) for immed trials
+        
+        # Sofiia 13.01.2021 define distance between square and triangle (needed further for defining correctness of response)
+        SqTr_distance = sqrt((x_square-x_triangle)**2+(y_square-y_triangle)**2)       
+        #print('dist ', SqTr_distance) 
         
         image_im.setImage('Images/'+picture)
         joystick_ImmedResp.oldButtonState = joystick_ImmedResp.device.getAllButtons()[:]
@@ -794,16 +804,20 @@ for thisTrial in trials:
                 if len(joystick_ImmedResp.x)!=0 and (x!= joystick_ImmedResp.x[-1] or y!= joystick_ImmedResp.y[-1]) and move==0:
                     joystick_RT_start = joystick_ImmedResp.joystickClock.getTime() - (image_im.tStartRefresh-text_cross_im.tStartRefresh )    # Sofiia 10.12.2020 change time
                     move = 1
-                    # Sofiia 19.11--------<
+                    # Sofiia --------< start of joystick movement
+                    #arduino.send_pulse_down()
+                    #logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    # --------------------->
+                    
+                # compare the position of joystick with x,y coordinates of correct object each frame               
+                #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                if joystick_resp_corr<0 and ((correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105))): # Sofia - return old threshold
+                    joystick_resp_corr = 1
+                    joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
+                    # Sofiia--------<   frame when subject crosses the correct zone by joystick
                     arduino.send_pulse_down()
                     logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->
-                    
-                # compare the position of joystick with x,y coordinates of correct object each frame
-                #if joystick_resp_corr<0 and (correct_object== 'square' and (float(x_square)-0.12)<x-x1<(float(x_square)+0.12) and (float(y_square)-0.12)<y-y1<(float(y_square)+0.12)) or (correct_object== 'triangle' and (float(x_triangle)-0.12)<x-x1<(float(x_triangle)+0.12) and (float(y_triangle)-0.12)<y-y1<(float(y_triangle)+0.12)):
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
-                    joystick_resp_corr = 1
-                    joystick_RT_corr = joystick_ImmedResp.joystickClock.getTime()
                 # -------->
                 
                 joystick_ImmedResp.x.append(x)
@@ -869,16 +883,61 @@ for thisTrial in trials:
         if NoMove_x and NoMove_y:
             missed_j = 1
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
+            #arduino.send_pulse_down()
+            #logging.log(level=logging.DATA, msg='Arduino pulse down')
+            # --------------------->                 
+        
+        # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
+        if joystick_resp_corr < 0:
+            # Sofiia--------<  if patient made incorrect movement, still we need to send pulses down
             arduino.send_pulse_down()
             logging.log(level=logging.DATA, msg='Arduino pulse down')
-            # --------------------->            
-        #else:
-            #i = 0
-            #while joystick_ImmedResp.x[i] == joystick_ImmedResp.x[i+1] and joystick_ImmedResp.y[i] == joystick_ImmedResp.y[i+1]:
-            #    i +=1
-            #nFrame_RT = i+1
+            # --------------------->                 
+            
+            # define correct zone for response around correct object 
+            if correct_object == 'square':
+                #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                #corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                corr_zoneX = [x_square-0.105, x_square-0.105, x_square+0.105, x_square+0.105]
+                corr_zoneY = [y_square-0.105, y_square+0.105, y_square+0.105, y_square-0.105]
+            else:
+                #corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                #corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                corr_zoneX = [x_triangle-0.105, x_triangle-0.105, x_triangle+0.105, x_triangle+0.105]
+                corr_zoneY = [y_triangle-0.105, y_triangle+0.105, y_triangle+0.105, y_triangle-0.105]
         
-        joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase # Sofiia 10.12.2020 change time
+            # new lists of zeros for new centered coordinates
+            x_centered = [0]*len(joystick_ImmedResp.x) 
+            y_centered = [0]*len(joystick_ImmedResp.y)
+            # convert real x y coordinates in zero-centered
+            for i in range(len(joystick_ImmedResp.x)):
+                x_centered[i] = joystick_ImmedResp.x[i] - x1
+        
+            for i in range(len(joystick_ImmedResp.y)):
+                y_centered[i] = joystick_ImmedResp.y[i] - y1
+        #print('x_cent',x_centered,'y_cent', y_centered)
+        
+            x_inter, y_inter = intersection(x_centered, y_centered, corr_zoneX, corr_zoneY) # find points of intersection between joystick trajectory and correct zone   
+            #print('x_inter',x_inter,'y_inter', y_inter)
+            if len(x_inter) != 0 or len(y_inter) != 0:
+                joystick_resp_corr = 1
+                
+                # find correct RT (using alternative method for dsearchn in matlab:  [val, idx] = min(abs(vector - thisValue)))
+                
+                x_interAr = array(x_inter)   # create array instead of list
+                x_centeredAr = array(x_centered)
+                
+                abDif = absolute(x_centeredAr - x_interAr[0])   # find abs diff between x cooordinates and the first point of intersec
+                result = np.where(abDif == amin(abDif))  # get the indice of minimum element 
+                timeInd = result[0][0]   # index of closest point in x to intersection point - to get the time of this point
+                joystick_RT_corr = joystick_ImmedResp.time[timeInd]
+                #print('joystick_RT_corr', joystick_RT_corr)
+                joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
+        else:
+            joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase
+        # ---------------->
+        
+        #joystick_RT_corr = joystick_RT_corr- (image_im.tStartRefresh-text_cross_im.tStartRefresh )  # calculate RT relative to the start of action phase # Sofiia 10.12.2020 change time
         
         attempts += 1
         if joystick_resp_corr==1:
@@ -886,8 +945,7 @@ for thisTrial in trials:
              sumRt += joystick_RT_corr;
         elif missed_j == 1:
             missed += 1
-        # ----------->
-            
+        # -----------> 
         
         loop_im.addData('text_cross_im.started', text_cross_im.tStartRefresh)
         loop_im.addData('text_cross_im.stopped', text_cross_im.tStopRefresh)
@@ -933,17 +991,18 @@ for thisTrial in trials:
     
     for thisLoop_del in loop_del:
         currentLoop = loop_del
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_del.rgb)
         if thisLoop_del != None:
             for paramName in thisLoop_del:
                 exec('{} = thisLoop_del[paramName]'.format(paramName))
         
         # ------Prepare to start Routine "trial_del"-------
-        continueRoutine = True
+        continueRoutine = True        
         routineTimer.add(14.000000)
         # update component parameters for each repeat
         x1, y1 = [None, None]  
-        #x1, y1 = joystick_DelResp.getX(), -1*joystick_DelResp.getY() #delta between the middle of the screen and the position of joystick before the trial
         joystick_resp_corr = -1
         joystick_RT_corr = 0.0
         
@@ -956,6 +1015,9 @@ for thisTrial in trials:
         #------>
         ITI_del = randint(18, 22)/10  # Sofiia 09.11.2020 variable ITI (1.8-2.2) for del trials
         delay = randint(39, 42)/10  # Sofiia 09.11.2020 variable delay (3.9-4.2) for del trials
+        
+        # Sofiia 13.01.2021 define distance between square and triangle (needed further for defining correctness of response)
+        SqTr_distance = sqrt((x_square-x_triangle)**2+(y_square-y_triangle)**2)
         
         image_del.setImage('Images/'+picture)
         #background.setImage('background.png')
@@ -1138,13 +1200,18 @@ for thisTrial in trials:
                     joystick_RT_start = joystick_DelResp.joystickClock.getTime() - (background.tStartRefresh-cross_ITI.tStartRefresh) # Sofiia 10.12.2020 change calculation of RT start 
                     move = 1 
                     # Sofiia 19.11--------<
+                    #arduino.send_pulse_down()
+                    #logging.log(level=logging.DATA, msg='Arduino pulse down')
+                    # --------------------->                    
+                # compare the position of joystick with x,y coordinates of correct object each frame
+                #if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-SqTr_distance/4)<x-x1<(x_square+SqTr_distance/4) and (y_square-SqTr_distance/4)<y-y1<(y_square+SqTr_distance/4)) or (correct_object== 'triangle' and (x_triangle-SqTr_distance/4)<x-x1<(x_triangle+SqTr_distance/4) and (y_triangle-SqTr_distance/4)<y-y1<(y_triangle+SqTr_distance/4)):
+                if joystick_resp_corr<0 and ((correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105))):
+                    joystick_resp_corr = 1
+                    joystick_RT_corr = joystick_DelResp.joystickClock.getTime()
+                    # Sofiia--------<
                     arduino.send_pulse_down()
                     logging.log(level=logging.DATA, msg='Arduino pulse down')
                     # --------------------->                    
-                # compare the position of joystick with x,y coordinates of correct object each frame
-                if joystick_resp_corr<0 and (correct_object== 'square' and (x_square-0.105)<x-x1<(x_square+0.105) and (y_square-0.105)<y-y1<(y_square+0.105)) or (correct_object== 'triangle' and (x_triangle-0.105)<x-x1<(x_triangle+0.105) and (y_triangle-0.105)<y-y1<(y_triangle+0.105)):
-                    joystick_resp_corr = 1
-                    joystick_RT_corr = joystick_DelResp.joystickClock.getTime()
                 # -------->
                 joystick_DelResp.x.append(x)
                 joystick_DelResp.y.append(y)
@@ -1209,10 +1276,60 @@ for thisTrial in trials:
         if NoMove_x and NoMove_y:
             missed_j = 1
             # Sofiia 19.11--------<  if patient doesn't move joystick, still we need to send pulses down
+            #arduino.send_pulse_down()
+            #logging.log(level=logging.DATA, msg='Arduino pulse down')
+            # --------------------->   
+ 
+        # if some frames were missed and response was marked as incorrect, then another check (via intersecrion of two zones) Sofiia 01.21---------<  
+        if joystick_resp_corr < 0:
+            # Sofiia--------<  
             arduino.send_pulse_down()
             logging.log(level=logging.DATA, msg='Arduino pulse down')
-            # --------------------->              
-        joystick_RT_corr = joystick_RT_corr-(background.tStartRefresh-cross_ITI.tStartRefresh) # calculate RT relative to the start of action phase  # Sofiia 10.12.2020 change calculation of RT start   
+            # --------------------->   
+            
+            # define correct zone for response around correct object 
+            if correct_object == 'square':
+                #corr_zoneX = [x_square-SqTr_distance/4, x_square-SqTr_distance/4, x_square+SqTr_distance/4, x_square+SqTr_distance/4]
+                #corr_zoneY = [y_square-SqTr_distance/4, y_square+SqTr_distance/4, y_square+SqTr_distance/4, y_square-SqTr_distance/4]
+                corr_zoneX = [x_square-0.105, x_square-0.105, x_square+0.105, x_square+0.105]
+                corr_zoneY = [y_square-0.105, y_square+0.105, y_square+0.105, y_square-0.105]
+            else:
+                #corr_zoneX = [x_triangle-SqTr_distance/4, x_triangle-SqTr_distance/4, x_triangle+SqTr_distance/4, x_triangle+SqTr_distance/4]
+                #corr_zoneY = [y_triangle-SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle+SqTr_distance/4, y_triangle-SqTr_distance/4]
+                corr_zoneX = [x_triangle-0.105, x_triangle-0.105, x_triangle+0.105, x_triangle+0.105]
+                corr_zoneY = [y_triangle-0.105, y_triangle+0.105, y_triangle+0.105, y_triangle-0.105]
+        
+            # new lists of zeros for new centered coordinates
+            x_centered = [0]*len(joystick_DelResp.x) 
+            y_centered = [0]*len(joystick_DelResp.y)
+            # convert real x y coordinates in zero-centered
+            for i in range(len(joystick_DelResp.x)):
+                x_centered[i] = joystick_DelResp.x[i] - x1
+        
+            for i in range(len(joystick_DelResp.y)):
+                y_centered[i] = joystick_DelResp.y[i] - y1
+            #print('x_cent',x_centered,'y_cent', y_centered)
+        
+            x_inter, y_inter = intersection(x_centered, y_centered, corr_zoneX, corr_zoneY) # find points of intersection between joystick trajectory and correct zone   
+            #print('x_inter',x_inter,'y_inter', y_inter)
+            if len(x_inter) != 0 or len(y_inter) != 0:
+                joystick_resp_corr = 1
+                
+                # find correct RT
+                x_interAr = array(x_inter)   # create array instead of lists
+                x_centeredAr = array(x_centered)
+                
+                abDif = absolute(x_centeredAr - x_interAr[0])   # find abs diff between x cooordinates and the first point of intersec
+                result = np.where(abDif == amin(abDif))  # get the indice of minimum element 
+                timeInd = result[0][0]   # index of closest point in x to intersection point - to get the time of this point - approximate RT
+                joystick_RT_corr = joystick_DelResp.time[timeInd]
+                #print('joystick_RT_corr', joystick_RT_corr)
+                joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
+        else:
+            joystick_RT_corr = joystick_RT_corr- (background.tStartRefresh-cross_ITI.tStartRefresh)  # calculate RT relative to the start of action phase
+        # ---------------->        
+  
+        #joystick_RT_corr = joystick_RT_corr-(background.tStartRefresh-cross_ITI.tStartRefresh) # calculate RT relative to the start of action phase  # Sofiia 10.12.2020 change calculation of RT start    
         
         attempts += 1
         if joystick_resp_corr==1:
@@ -1273,6 +1390,8 @@ for thisTrial in trials:
     
     for thisLoopFeedback in loopFeedback:
         currentLoop = loopFeedback
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoopFeedback.rgb)
         if thisLoopFeedback != None:
             for paramName in thisLoopFeedback:
@@ -1370,6 +1489,8 @@ for thisTrial in trials:
     
     for thisLoop_del_diff in loop_del_diff:
         currentLoop = loop_del_diff
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_del_diff.rgb)
         if thisLoop_del_diff != None:
             for paramName in thisLoop_del_diff:
@@ -1385,10 +1506,16 @@ for thisTrial in trials:
         answer_button.oldButtonState = answer_button.device.getAllButtons()[:]
         answer_button.keys = []
         answer_button.rt = []
-        if feedback_q == 1:       # Sofiia 13.11.2020 time to answer the question (in training 10 sec, in main exp 2 sec)
+        if feedback_q == 1 and block == -3:   # Sofiia: time to read the question (in training immed_diff - 10 sec (first time), in training del_diff and in main exp - 2 sec)
             q_time = 10.000000
         else:
             q_time = 2.000000
+        
+        #if delayed == 1:
+        #    time2answ = q_time + ITI_del  # Sofiia: time to answer the question - possibility to answer after it's dissappeared - also during ITI
+        #else:
+        #    time2answ = q_time + ITI_immed
+            
         routineTimer.add(q_time)
         # keep track of which components have finished
         question_delComponents = [question, answer_button]
@@ -1443,6 +1570,7 @@ for thisTrial in trials:
             if answer_button.status == STARTED:
                 # is it time to stop? (based on global clock, using actual start)
                 if tThisFlipGlobal > answer_button.tStartRefresh + q_time-frameTolerance:  # Sofiia 13.11.2020
+                #if tThisFlipGlobal > answer_button.tStartRefresh + time2answ-frameTolerance:  # Sofiia 13.01.2021
                     # keep track of stop time/frame for later
                     answer_button.tStop = t  # not accounting for scr refresh
                     answer_button.frameNStop = frameN  # exact frame index
@@ -1530,6 +1658,8 @@ for thisTrial in trials:
     
     for thisLoop_fb_question in loop_fb_question:
         currentLoop = loop_fb_question
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break    
         # abbreviate parameter names if possible (e.g. rgb = thisLoop_fb_question.rgb)
         if thisLoop_fb_question != None:
             for paramName in thisLoop_fb_question:
@@ -1625,6 +1755,8 @@ for thisTrial in trials:
     
     for thisLoopEnd_block in loopEnd_block:
         currentLoop = loopEnd_block
+        if omitBlock[0] == block and omitBlock[1] == 1:   # Sofia 19.01.2021 repeatition of failed blocks
+            break         
         # abbreviate parameter names if possible (e.g. rgb = thisLoopEnd_block.rgb)
         if thisLoopEnd_block != None:
             for paramName in thisLoopEnd_block:
@@ -1741,6 +1873,12 @@ for thisTrial in trials:
         for thisComponent in end_blockComponents:
             if hasattr(thisComponent, "setAutoDraw"):
                 thisComponent.setAutoDraw(False)
+        
+        # Sofiia 19.01.2020 attempt to programm the number of failed blocks in training session
+        if feedback==1 and sumScore >= 4: # if the number of correct is 4 or more from 5 , do not repeat this block
+            omitBlock[0] = block # which block
+            omitBlock[1] = 1    # omit
+                
         attempts = 0
         sumScore = 0
         missed = 0
@@ -1784,7 +1922,7 @@ for thisTrial in trials:
         continueRoutine = True
         routineTimer.add(1.000000)
         # update component parameters for each repeat
-        msg_long_pause = 'Wait  ' + str(long_pause) + ' s'
+        msg_long_pause = LANG['pause']+'  ' + str(long_pause) + ' s'
         text.setText(msg_long_pause)
         # keep track of which components have finished
         longPauseComponents = [text]
